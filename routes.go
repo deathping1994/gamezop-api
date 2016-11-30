@@ -16,23 +16,32 @@ type Routes []Route
 var routes = Routes{
     Route{
 		"CarByID",
-		[]string{"GET","PATCH","DELETE"},
+		[]string{"GET","PATCH","DELETE", "OPTIONS"},
 		"/cars/{id}/",
 		CarByID,
 	},
 	Route{
 		"CarApi",
-		[]string{"GET","POST"},
+		[]string{"GET","POST", "OPTIONS"},
 		"/cars/",
 		CarApi,
 	},
+}
+
+func withCORS(fn http.HandlerFunc) http.HandlerFunc {
+ return func(w http.ResponseWriter, r *http.Request) {
+   w.Header().Set("Access-Control-Allow-Origin", "*")
+   w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+   fn(w, r)
+ }
 }
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
 		var handler http.Handler
-		handler = route.HandlerFunc
+		handler = withCORS(route.HandlerFunc)
 		handler = Logger(handler, route.Name)
 		router.
 			Methods(route.Method...).
